@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -39,10 +40,14 @@ func run(
 		ErrorLog:          slog.NewLogLogger(logger.Handler(), slog.LevelError),
 	}
 
+	listener, err := net.Listen("tcp", cfg.HTTPAddr)
+	if err != nil {
+		return fmt.Errorf("listen: %w", err)
+	}
+	logger.Info("server listening", "addr", cfg.HTTPAddr, "env", cfg.Env)
 	serverErr := make(chan error, 1)
 	go func() {
-		logger.Info("server listening", "addr", cfg.HTTPAddr, "env", cfg.Env)
-		serverErr <- httpServer.ListenAndServe()
+		serverErr <- httpServer.Serve(listener)
 	}()
 
 	select {
