@@ -7,7 +7,7 @@ import (
 	"github.com/quockhanhcao/simple_store/internal/config"
 )
 
-func NewServer(
+func NewHandler(
 	logger *slog.Logger,
 	cfg *config.Config,
 ) http.Handler {

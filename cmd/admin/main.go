@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -13,6 +14,7 @@ import (
 	"time"
 
 	"github.com/quockhanhcao/simple_store/internal/config"
+	"github.com/quockhanhcao/simple_store/internal/database"
 	"github.com/quockhanhcao/simple_store/internal/platform"
 )
 
@@ -21,19 +23,41 @@ func run(
 	getenv func(string) string,
 	stdout io.Writer,
 ) error {
-
+	// load config
 	cfg, err := config.Load(getenv, ":5194")
 	if err != nil {
 		return fmt.Errorf("load config: %w", err)
 	}
+
+	// create logger
 	logger := platform.NewLogger(stdout, cfg.LogLevel, cfg.LogFormat)
-	srv := NewServer(
+
+	// db pool
+	pool, err := database.NewConnectionPool(ctx, cfg.DatabaseURL)
+	if err != nil {
+		return fmt.Errorf("open database: %w", err)
+	}
+	defer pool.Close()
+
+	// check pending migrations
+	pendingMigrations, err := database.CheckSchema(ctx, pool)
+	if err != nil {
+		return fmt.Errorf("check schema: %w", err)
+	}
+	if pendingMigrations {
+		return errors.New("database schema is out of date: run 'make migrate'")
+	}
+
+	// handler
+	handler := NewHandler(
 		logger,
 		cfg,
 	)
+
+	// server
 	httpServer := &http.Server{
 		Addr:              cfg.HTTPAddr,
-		Handler:           srv,
+		Handler:           handler,
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       10 * time.Second,
 		WriteTimeout:      30 * time.Second,

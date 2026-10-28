@@ -1,0 +1,39 @@
+# Local infrastructure for SimpleStore
+name: simplestore
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: storedb
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      # "Ready" = accepting connections to storedb, not just "process started".
+      # depends_on: condition: service_healthy waits for this
+      test: ["CMD-SHELL", "pg_isready -U postgres -d storedb"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+    restart: unless-stopped
+
+  pgweb:
+    image: sosedoff/pgweb:latest
+    # Inside the compose network, services reach each other by service name ("postgres"),
+    # not localhost. localhost inside a container means that container itself.
+    command: ["pgweb", "--bind=0.0.0.0", "--listen=8081"]
+    environment:
+      PGWEB_DATABASE_URL: postgres://postgres:postgres@postgres:5432/storedb?sslmode=disable
+    ports:
+      - "8081:8081"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  pgdata:

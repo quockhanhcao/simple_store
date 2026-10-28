@@ -32,7 +32,7 @@ func TestRoutes(t *testing.T) {
 			t.Parallel()
 
 			// DiscardHandler: tests don't need log output.
-			srv := NewServer(slog.New(slog.DiscardHandler), &config.Config{Env: tt.env})
+			srv := NewHandler(slog.New(slog.DiscardHandler), &config.Config{Env: tt.env})
 			rec := httptest.NewRecorder()
 			req := httptest.NewRequest(tt.method, tt.path, nil)
 
