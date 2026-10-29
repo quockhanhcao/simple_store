@@ -36,11 +36,15 @@ func run(
 	defer pool.Close()
 
 	// migrate
-	err = database.Migrate(ctx, pool)
+	migrateRes, err := database.Migrate(ctx, pool)
 	if err != nil {
 		return fmt.Errorf("migrate: %w", err)
 	}
-	logger.Info("migrations applied")
+	if len(migrateRes) == 0 {
+		logger.Info("schema up to date")
+	} else {
+		logger.Info("migrations applied", "count", len(migrateRes), "results", migrateRes)
+	}
 
 	return nil
 }

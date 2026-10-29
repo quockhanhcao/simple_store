@@ -56,7 +56,6 @@ func run(
 
 	// server
 	httpServer := &http.Server{
-		Addr:              cfg.HTTPAddr,
 		Handler:           handler,
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       10 * time.Second,
@@ -71,7 +70,7 @@ func run(
 	if err != nil {
 		return fmt.Errorf("listen: %w", err)
 	}
-	logger.Info("server listening", "addr", cfg.HTTPAddr, "env", cfg.Env)
+	logger.Info("server listening", "addr", listener.Addr(), "env", cfg.Env)
 	go func() {
 		serverErr <- httpServer.Serve(listener)
 	}()

@@ -1,4 +1,4 @@
-.PHONY: run-store run-admin build test vet fmt check clean migrate-create db-up db-down db-reset db-psql
+.PHONY: run-store run-admin build test vet fmt check clean migrate-create db-up db-down db-reset db-psql migrate
 
 ENV_FILE ?= .env
 MIGRATIONS_DIR ?= ./internal/database/migrations

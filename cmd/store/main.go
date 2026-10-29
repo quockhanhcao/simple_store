@@ -42,7 +42,7 @@ func run(
 	// check pending migrations
 	pendingMigrations, err := database.CheckSchema(ctx, pool)
 	if err != nil {
-		return fmt.Errorf("migrate: %w", err)
+		return fmt.Errorf("check schema: %w", err)
 	}
 	if pendingMigrations {
 		return errors.New("database schema is out of date: run 'make migrate'")
@@ -55,7 +55,6 @@ func run(
 	)
 	//server
 	httpServer := &http.Server{
-		Addr:              cfg.HTTPAddr,
 		Handler:           srv,
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       10 * time.Second,
@@ -71,7 +70,7 @@ func run(
 	if err != nil {
 		return fmt.Errorf("listen: %w", err)
 	}
-	logger.Info("server listening", "addr", cfg.HTTPAddr, "env", cfg.Env)
+	logger.Info("server listening", "addr", listener.Addr(), "env", cfg.Env)
 	go func() {
 		serverErr <- httpServer.Serve(listener)
 	}()

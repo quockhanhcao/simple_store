@@ -3,28 +3,17 @@ package database
 import (
 	"context"
 	"fmt"
-	"io/fs"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/jackc/pgx/v5/stdlib"
-	"github.com/pressly/goose/v3"
 )
 
 func CheckSchema(ctx context.Context, pool *pgxpool.Pool) (bool, error) {
-
-	migrations, err := fs.Sub(embedMigrations, "migrations")
+	provider, err := newGooseProvider(pool)
 	if err != nil {
-		return false, fmt.Errorf("open embedded migrations: %w", err)
+		return false, fmt.Errorf("migration provider: %w", err)
 	}
-
-	db := stdlib.OpenDBFromPool(pool)
-	defer db.Close()
-
-	provider, err := goose.NewProvider(goose.DialectPostgres, db, migrations)
-	if err != nil {
-		return false, fmt.Errorf("create migration provider: %w", err)
-	}
+	defer provider.Close()
 
 	timeoutCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
