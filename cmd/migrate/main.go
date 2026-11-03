@@ -46,6 +46,12 @@ func run(
 		logger.Info("migrations applied", "count", len(migrateRes), "results", migrateRes)
 	}
 
+	// seeding data
+	err = database.Seed(ctx, pool)
+	if err != nil {
+		return fmt.Errorf("seeding data: %w", err)
+	}
+
 	return nil
 }
 
