@@ -47,7 +47,7 @@ func run(
 	}
 
 	// seeding data
-	err = database.Seed(ctx, pool)
+	err = database.Seed(ctx, logger, pool)
 	if err != nil {
 		return fmt.Errorf("seeding data: %w", err)
 	}

@@ -1,4 +1,4 @@
-.PHONY: run-store run-admin build test vet fmt check clean migrate-create db-up db-down db-reset db-psql migrate
+.PHONY: run-store run-admin build test vet fmt check clean migrate-create db-up db-down db-reset db-psql migrate sqlc sqlc-check
 
 ENV_FILE ?= .env
 MIGRATIONS_DIR ?= ./internal/database/migrations
@@ -56,6 +56,14 @@ db-reset:
 
 db-psql:
 	docker compose exec postgres psql -U postgres -d storedb
+
+# Regenerates internal/database/sqlcdb from queries/*.sql and the migrations.
+sqlc:
+	go tool sqlc generate
+
+# Read-only: fails if the generated code is out of date with the SQL.
+sqlc-check:
+	go tool sqlc diff
 
 migrate:
 	$(LOAD_ENV) go run ./cmd/migrate

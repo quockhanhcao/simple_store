@@ -1,4 +1,7 @@
 
+-- name: AcquireSeedLock :exec
+SELECT pg_advisory_xact_lock(7243001);
+
 -- name: CategoriesExist :one
 SELECT EXISTS (SELECT 1 FROM categories);
 

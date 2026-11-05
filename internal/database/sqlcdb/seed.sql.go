@@ -3,13 +3,22 @@
 //   sqlc v1.31.1
 // source: seed.sql
 
-package queries
+package sqlcdb
 
 import (
 	"context"
 
 	"github.com/shopspring/decimal"
 )
+
+const acquireSeedLock = `-- name: AcquireSeedLock :exec
+SELECT pg_advisory_xact_lock(7243001)
+`
+
+func (q *Queries) AcquireSeedLock(ctx context.Context) error {
+	_, err := q.db.Exec(ctx, acquireSeedLock)
+	return err
+}
 
 const categoriesExist = `-- name: CategoriesExist :one
 SELECT EXISTS (SELECT 1 FROM categories)
