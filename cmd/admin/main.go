@@ -53,7 +53,6 @@ func run(
 		logger,
 		cfg,
 	)
-
 	// server
 	httpServer := &http.Server{
 		Handler:           handler,

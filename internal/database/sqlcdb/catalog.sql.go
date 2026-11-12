@@ -74,8 +74,8 @@ SELECT p.id, p.name AS product_name, p.description, p.price, p.stock, p.image_ur
 JOIN categories c ON p.category_id = c.id
 WHERE ($1::int IS NULL OR p.category_id = $1)
 AND ($2::text IS NULL
-        OR p.name LIKE '%' || $2 || '%'
-        OR p.description LIKE '%' || $2 || '%')
+        OR p.name LIKE $2 ESCAPE '\'
+        OR p.description LIKE $2 ESCAPE '\')
 `
 
 type ListProductsParams struct {

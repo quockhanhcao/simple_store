@@ -15,6 +15,7 @@ import (
 
 	"github.com/quockhanhcao/simple_store/internal/config"
 	"github.com/quockhanhcao/simple_store/internal/database"
+	"github.com/quockhanhcao/simple_store/internal/database/sqlcdb"
 	"github.com/quockhanhcao/simple_store/internal/platform"
 )
 
@@ -48,10 +49,14 @@ func run(
 		return errors.New("database schema is out of date: run 'make migrate'")
 	}
 
+	// build dependencies
+	repository := sqlcdb.New(pool)
+
 	// handler
 	srv := NewHandler(
 		logger,
 		cfg,
+		repository,
 	)
 	//server
 	httpServer := &http.Server{
