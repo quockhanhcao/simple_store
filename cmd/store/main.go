@@ -13,10 +13,12 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/quockhanhcao/simple_store/internal/catalog"
 	"github.com/quockhanhcao/simple_store/internal/config"
 	"github.com/quockhanhcao/simple_store/internal/database"
 	"github.com/quockhanhcao/simple_store/internal/database/sqlcdb"
 	"github.com/quockhanhcao/simple_store/internal/platform"
+	"github.com/shopspring/decimal"
 )
 
 func run(
@@ -50,13 +52,14 @@ func run(
 	}
 
 	// build dependencies
-	repository := sqlcdb.New(pool)
+	queries := sqlcdb.New(pool)
+	catalogSvc := catalog.NewService(queries)
 
 	// handler
 	srv := NewHandler(
 		logger,
 		cfg,
-		repository,
+		catalogSvc,
 	)
 	//server
 	httpServer := &http.Server{
@@ -98,6 +101,11 @@ func run(
 }
 
 func main() {
+	// shopspring/decimal marshals to a JSON string ("199.99") by default, but the
+	// API contract says money is a JSON number. This is a package-level global, so
+	// it is set exactly once, here at startup, before any goroutine encodes JSON.
+	decimal.MarshalJSONWithoutQuotes = true
+
 	ctx := context.Background()
 	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
 	defer cancel()
