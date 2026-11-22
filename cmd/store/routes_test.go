@@ -137,21 +137,43 @@ var phone = catalog.Product{
 func TestRoutes(t *testing.T) {
 	t.Parallel()
 
+	const (
+		textPlain = "text/plain; charset=utf-8"
+		textHTML  = "text/html; charset=utf-8"
+		jsonType  = "application/json; charset=utf-8"
+	)
+
 	tests := []struct {
-		name       string
-		env        string
-		method     string
-		path       string
-		wantStatus int
-		wantBody   string // checked only when non-empty
+		name            string
+		env             string
+		method          string
+		path            string
+		wantStatus      int
+		wantBody        string // checked only when non-empty
+		wantContentType string // checked only when non-empty
+		wantErrorCode   string // when non-empty, the body must be the JSON error envelope
 	}{
-		{"alive in Development", "Development", http.MethodGet, "/alive", http.StatusOK, "Healthy"},
-		{"HEAD alive is allowed", "Development", http.MethodHead, "/alive", http.StatusOK, ""},
-		{"wrong method on alive", "Development", http.MethodPost, "/alive", http.StatusMethodNotAllowed, ""},
-		{"alive is not mapped in Production", "Production", http.MethodGet, "/alive", http.StatusNotFound, ""},
-		{"unknown path", "Development", http.MethodGet, "/nope", http.StatusNotFound, ""},
-		{"POST products is 405", "Development", http.MethodPost, "/api/v1/products", http.StatusMethodNotAllowed, ""},
-		{"POST product is 405", "Development", http.MethodPost, "/api/v1/products/1", http.StatusMethodNotAllowed, ""},
+		{"alive in Development", "Development", http.MethodGet, "/alive", http.StatusOK, "Healthy", textPlain, ""},
+		{"HEAD alive is allowed", "Development", http.MethodHead, "/alive", http.StatusOK, "", textPlain, ""},
+		{"wrong method on alive", "Development", http.MethodPost, "/alive", http.StatusMethodNotAllowed, "", "", ""},
+		// /alive falls through to the file server, which has no such file.
+		{"alive is not mapped in Production", "Production", http.MethodGet, "/alive", http.StatusNotFound, "", "", ""},
+		{"unknown path", "Development", http.MethodGet, "/nope", http.StatusNotFound, "", "", ""},
+		{"unknown file", "Development", http.MethodGet, "/nope.html", http.StatusNotFound, "", "", ""},
+		{"POST products is 405", "Development", http.MethodPost, "/api/v1/products", http.StatusMethodNotAllowed, "", "", ""},
+		{"POST product is 405", "Development", http.MethodPost, "/api/v1/products/1", http.StatusMethodNotAllowed, "", "", ""},
+
+		// Embedded storefront.
+		{"root serves index.html", "Development", http.MethodGet, "/", http.StatusOK, "", textHTML, ""},
+		{"product page", "Development", http.MethodGet, "/product.html", http.StatusOK, "", textHTML, ""},
+		{"stylesheet", "Development", http.MethodGet, "/css/site.css", http.StatusOK, "", "text/css; charset=utf-8", ""},
+		{"POST root is 405", "Development", http.MethodPost, "/", http.StatusMethodNotAllowed, "", "", ""},
+
+		// /api/ catch-all: API typos get JSON, never the file server's 404.
+		{"unknown API path is a JSON 404", "Development", http.MethodGet, "/api/v1/nope", http.StatusNotFound, "", jsonType, "not_found"},
+		// The catch-all is GET-only (see routes.go), so other methods get the mux's 405.
+		{"POST unknown API path is 405", "Development", http.MethodPost, "/api/v1/nope", http.StatusMethodNotAllowed, "", "", ""},
+		{"API root is a JSON 404", "Development", http.MethodGet, "/api/", http.StatusNotFound, "", jsonType, "not_found"},
 	}
 
 	for _, tt := range tests {
@@ -171,10 +193,13 @@ func TestRoutes(t *testing.T) {
 			if tt.wantBody != "" && rec.Body.String() != tt.wantBody {
 				t.Errorf("body = %q, want %q", rec.Body.String(), tt.wantBody)
 			}
-			if tt.wantStatus == http.StatusOK {
-				if ct := rec.Header().Get("Content-Type"); ct != "text/plain; charset=utf-8" {
-					t.Errorf("Content-Type = %q, want %q", ct, "text/plain; charset=utf-8")
+			if tt.wantContentType != "" {
+				if ct := rec.Header().Get("Content-Type"); ct != tt.wantContentType {
+					t.Errorf("Content-Type = %q, want %q", ct, tt.wantContentType)
 				}
+			}
+			if tt.wantErrorCode != "" {
+				assertErrorEnvelope(t, rec, tt.wantErrorCode)
 			}
 		})
 	}

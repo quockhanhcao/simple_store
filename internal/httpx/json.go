@@ -3,6 +3,7 @@ package httpx
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"net/http"
 )
 
@@ -23,5 +24,5 @@ func WriteJSON(w http.ResponseWriter, status int, v any) error {
 // read body with MaxBytesReader and DisallowUnknownFields
 func DecodeJSON(w http.ResponseWriter, r *http.Request, dst any) error {
 
-	return nil
+	return errors.New("Not implemented yet")
 }

@@ -85,7 +85,7 @@ func handleListProducts(logger *slog.Logger, svc catalogService) http.Handler {
 		categoryID := r.URL.Query().Get("categoryId")
 		search := r.URL.Query().Get("search")
 		searchParams := catalog.ListProductsParams{Search: search}
-		parsedCategoryID, err := parseOptionalInt32("Category id", categoryID)
+		parsedCategoryID, err := parseOptionalInt32("categoryId", categoryID)
 		if err != nil {
 			httpx.Error(w, r, logger, err)
 			return
@@ -109,12 +109,12 @@ func handleListProducts(logger *slog.Logger, svc catalogService) http.Handler {
 
 func handleGetProduct(logger *slog.Logger, svc catalogService) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		productID, err := parseOptionalInt32("Product id", r.PathValue("id"))
+		productID, err := parseInt32("productId", r.PathValue("id"))
 		if err != nil {
 			httpx.Error(w, r, logger, err)
 			return
 		}
-		row, err := svc.GetProduct(r.Context(), *productID)
+		row, err := svc.GetProduct(r.Context(), productID)
 		if err != nil {
 			httpx.Error(w, r, logger, err)
 			return
@@ -129,10 +129,21 @@ func parseOptionalInt32(name, value string) (*int32, error) {
 	if value == "" {
 		return nil, nil
 	}
+	v, err := parseInt32(name, value)
+	if err != nil {
+		return nil, err
+	}
+	return &v, nil
+}
+
+func parseInt32(name, value string) (int32, error) {
+	if value == "" {
+		return 0, httpx.BadRequest(name + " must be an integer")
+	}
 	i, err := strconv.ParseInt(value, 10, 32)
 	if err != nil {
-		return nil, httpx.BadRequest(name + " must be an integer")
+		return 0, httpx.BadRequest(name + " must be an integer")
 	}
 	v := int32(i)
-	return &v, nil
+	return v, nil
 }
