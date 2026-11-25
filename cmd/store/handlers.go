@@ -109,7 +109,7 @@ func handleListProducts(logger *slog.Logger, svc catalogService) http.Handler {
 
 func handleGetProduct(logger *slog.Logger, svc catalogService) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		productID, err := parseInt32("productId", r.PathValue("id"))
+		productID, err := parseInt32("id", r.PathValue("id"))
 		if err != nil {
 			httpx.Error(w, r, logger, err)
 			return

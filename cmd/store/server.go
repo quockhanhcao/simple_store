@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/quockhanhcao/simple_store/internal/config"
+	"github.com/quockhanhcao/simple_store/internal/httpx"
 )
 
 func NewHandler(
@@ -21,5 +22,5 @@ func NewHandler(
 		catalogSvc,
 	)
 	var handler http.Handler = mux
-	return handler
+	return httpx.Chain(handler, httpx.RequestID, httpx.AccessLog(logger), httpx.Recover(logger))
 }

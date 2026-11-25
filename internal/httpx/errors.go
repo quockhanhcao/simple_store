@@ -5,7 +5,6 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/quockhanhcao/simple_store/constant"
 	"github.com/quockhanhcao/simple_store/internal/database"
 )
 
@@ -42,9 +41,9 @@ func Error(w http.ResponseWriter, r *http.Request, logger *slog.Logger, err erro
 		return
 	}
 	if errors.Is(err, database.ErrNotFound) {
-		WriteError(w, http.StatusNotFound, "not_found", constant.NotFoundMsg)
+		WriteError(w, http.StatusNotFound, "not_found", NotFoundMsg)
 		return
 	}
-	logger.Error("request failed", "method", r.Method, "path", r.URL.Path, "err", err)
+	logger.Error("request failed", "method", r.Method, "path", r.URL.Path, "request_id", RequestIDFrom(r.Context()), "err", err)
 	WriteError(w, http.StatusInternalServerError, "internal", "An unexpected error occurred.")
 }

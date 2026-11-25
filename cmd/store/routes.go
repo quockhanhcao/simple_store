@@ -5,7 +5,6 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/quockhanhcao/simple_store/constant"
 	"github.com/quockhanhcao/simple_store/internal/config"
 	"github.com/quockhanhcao/simple_store/internal/httpx"
 	"github.com/quockhanhcao/simple_store/web"
@@ -29,7 +28,7 @@ func addRoutes(
 	// It must be "GET /api/", not "/api/": a method-less "/api/" next to "GET /" panics
 	// as a conflict (neither is more specific: one has the longer path, the other the method).
 	mux.Handle("GET /api/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		httpx.WriteError(w, http.StatusNotFound, "not_found", constant.NotFoundMsg)
+		httpx.WriteError(w, http.StatusNotFound, "not_found", httpx.NotFoundMsg)
 	}))
 
 	// Everything else is the embedded storefront.
